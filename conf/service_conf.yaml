@@ -1,0 +1,100 @@
+mysql:
+  name: 'ragflow'
+  user: 'ragflow' 
+  password: 'infiniflow'
+  host: 'ragflow_mysql'
+  port: 3306
+
+redis:
+  host: 'ragflow_redis'
+  port: 6379
+  password: 'infiniflow'
+
+elasticsearch:
+  hosts: 'ragflow_elasticsearch:9200'
+  name: 'ragflow'
+
+minio:
+  user: 'root'
+  password: '12345678'
+  host: 'ragflow_minio:9000'
+
+user_default_llm:
+  Tongyi-Qianwen: {
+    model_type: chat,
+    api_key: sk-,
+    api_base: https://dashscope.aliyuncs.com/compatible-mode/v1,
+    llm_name: qwen-turbo
+  }
+  ZHIPU-AI: {
+    model_type: chat, 
+    api_key: sk-,
+    api_base: https://open.bigmodel.cn/api/paas/v4,
+    llm_name: glm-3-turbo
+  }
+  OpenAI: {
+    model_type: chat,
+    api_key: sk-,
+    api_base: https://api.openai.com/v1,
+    llm_name: gpt-3.5-turbo
+  }
+  Ollama: {
+    model_type: chat,
+    api_key: sk-,
+    api_base: http://ragflow_ollama:11434/v1,
+    llm_name: qwen:0.5b
+  }
+
+embedding_default_llm:
+  Ollama: {
+    model_type: embedding,
+    api_key: sk-,
+    api_base: http://ragflow_ollama:11434/v1, 
+    llm_name: bge-large:latest
+  }
+  ZHIPU-AI: {
+    model_type: embedding,
+    api_key: sk-,
+    api_base: https://open.bigmodel.cn/api/paas/v4,
+    llm_name: embedding-2
+  }
+  OpenAI: {
+    model_type: embedding,
+    api_key: sk-,
+    api_base: https://api.openai.com/v1,
+    llm_name: text-embedding-ada-002
+  }
+
+rerank_default_llm:
+  BAAI: {
+    model_type: rerank,
+    llm_name: BAAI/bge-reranker-large
+  }
+  Jina: {
+    model_type: rerank, 
+    llm_name: jina-reranker-v1-base-en
+  }
+
+image2text_default_llm:
+  OpenAI: {
+    model_type: image2text,
+    api_key: sk-,
+    api_base: https://api.openai.com/v1,
+    llm_name: gpt-4o
+  }
+
+asr_default_llm:
+  OpenAI: {
+    model_type: speech2text,
+    api_key: sk-,
+    api_base: https://api.openai.com/v1, 
+    llm_name: whisper-1
+  }
+
+tts_default_llm:
+  OpenAI: {
+    model_type: tts,
+    api_key: sk-,
+    api_base: https://api.openai.com/v1,
+    llm_name: tts-1
+  }

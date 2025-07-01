@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  ragflow:
+    image: infiniflow/ragflow:v0.19.1-slim
+    container_name: ragflow
+    ports:
+      - "9380:9380"
+      - "80:80"
+    environment:
+      - RAGFLOW_VERSION=v0.19.1-slim
+      - MYSQL_PASSWORD=infiniflow
+      - REDIS_PASSWORD=infiniflow
+      - TZ=Asia/Shanghai
+    volumes:
+      - ragflow_data:/ragflow
+      - ./conf:/ragflow/conf
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ragflow_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: ragflow_mysql
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: infiniflow
+      MYSQL_DATABASE: ragflow
+      MYSQL_USER: ragflow
+      MYSQL_PASSWORD: infiniflow
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "5455:3306"  # Using port 5455 as per RAGFlow docs
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - ragflow_network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: ragflow_redis
+    command: redis-server --requirepass infiniflow
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ragflow_network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: ragflow_elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - http.host=0.0.0.0
+      - transport.host=127.0.0.1
+      - network.host=0.0.0.0
+      - cluster.name=ragflow-es
+      - node.name=es01
+    ports:
+      - "1200:9200"  # Using port 1200 as per RAGFlow docs
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ragflow_network
+
+  minio:
+    image: minio/minio:latest
+    container_name: ragflow_minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: root
+      MINIO_ROOT_PASSWORD: 12345678
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ragflow_network
+
+  # Optional: Ollama for local LLM inference
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ragflow_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - ragflow_network
+
+volumes:
+  ragflow_data:
+  mysql_data:
+  redis_data:
+  elasticsearch_data:
+  minio_data:
+  ollama_data:
+
+networks:
+  ragflow_network:
+    driver: bridge
